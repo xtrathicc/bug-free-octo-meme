@@ -369,3 +369,22 @@ export enum MASK_TYPES {
     STENCIL = 2,
     SPRITE = 3,
 }
+
+/**
+ * Constants for multi-sampling antialiasing
+ *
+ * @name MSAA_QUALITY
+ * @memberof PIXI
+ * @static
+ * @enum {number}
+ * @property {number} NONE - No multisampling for this renderTexture
+ * @property {number} LOW - Same as NONE
+ * @property {number} MEDIUM - Try 4 samples
+ * @property {number} HIGH - Try 8 samples
+ */
+export enum MSAA_QUALITY {
+    NONE = 0,
+    LOW = 0,
+    MEDIUM = 4,
+    HIGH = 8
+}

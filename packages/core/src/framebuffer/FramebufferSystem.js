@@ -4,6 +4,8 @@ import { ENV } from '@pixi/constants';
 import { settings } from '../settings';
 import { Framebuffer } from './Framebuffer';
 
+const tempRectangle = new Rectangle();
+
 /**
  * System plugin to the renderer to manage framebuffers.
  *
@@ -33,6 +35,8 @@ export class FramebufferSystem extends System
          * @readonly
          */
         this.unknownFramebuffer = new Framebuffer(10, 10);
+
+        this.msaaSamples = null;
     }
 
     /**
@@ -82,6 +86,43 @@ export class FramebufferSystem extends System
                 this.writeDepthTexture = false;
             }
         }
+        else
+        {
+            // WebGL2
+            // cache possible MSAA samples
+            this.msaaSamples = gl.getInternalformatParameter(gl.RENDERBUFFER, gl.RGBA8, gl.SAMPLES);
+        }
+    }
+
+    /**
+     * Detects number of samples that is not more than a param but as close to it as possible
+     *
+     * @param {number} samples number of samples
+     * @returns {number} recommended number of samples
+     */
+    detectSamples(samples)
+    {
+        const { msaaSamples } = this;
+        let res = 0;
+
+        if (msaaSamples === null)
+        {
+            return 0;
+        }
+        for (let i = 0; i < msaaSamples.length; i++)
+        {
+            if (msaaSamples[i] >= samples)
+            {
+                res = msaaSamples[i];
+            }
+        }
+
+        if (res === 1)
+        {
+            res = 0;
+        }
+
+        return res;
     }
 
     /**
@@ -243,6 +284,10 @@ export class FramebufferSystem extends System
             dirtyId: 0,
             dirtyFormat: 0,
             dirtySize: 0,
+            // fields for MSAA
+            multisample: this.detectSamples(framebuffer.multisample),
+            msaaBuffer: null,
+            blitFramebuffer: null, // this framebuffer will hold colorTextures[0]
         };
 
         framebuffer.glFramebuffers[this.CONTEXT_UID] = fbo;
@@ -306,10 +351,24 @@ export class FramebufferSystem extends System
             count = Math.min(count, 1);
         }
 
+        if (fbo.multisample > 1)
+        {
+            fbo.msaaBuffer = gl.createRenderbuffer();
+            gl.bindRenderbuffer(gl.RENDERBUFFER, fbo.msaaBuffer);
+            gl.renderbufferStorageMultisample(gl.RENDERBUFFER, fbo.multisample,
+                gl.RGBA8, framebuffer.width, framebuffer.height);
+            gl.framebufferRenderbuffer(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.RENDERBUFFER, fbo.msaaBuffer);
+        }
+
         const activeTextures = [];
 
         for (let i = 0; i < count; i++)
         {
+            if (i === 0 && fbo.multisample > 1)
+            {
+                continue;
+            }
+
             const texture = framebuffer.colorTextures[i];
 
             if (texture.texturePart)
@@ -375,6 +434,70 @@ export class FramebufferSystem extends System
     }
 
     /**
+     * Only works with WebGL2
+     *
+     * blits framebuffer to another of the same or bigger size
+     * after that target framebuffer is bound
+     *
+     * Fails with WebGL warning if blits multisample framebuffer to different size
+     *
+     * @param {PIXI.Framebuffer} [framebuffer] by default it blits "into itself", from renderBuffer to texture.
+     * @param {PIXI.Rectangle} [sourcePixels] source rectangle in pixels
+     * @param {PIXI.Rectangle} [destPixels] dest rectangle in pixels, assumed to be the same as sourcePixels
+     */
+    blit(framebuffer, sourcePixels, destPixels)
+    {
+        const { current, renderer, gl, CONTEXT_UID } = this;
+
+        if (renderer.context.webGLVersion !== 2)
+        {
+            return;
+        }
+
+        if (!current)
+        {
+            return;
+        }
+        const fbo = current.glFramebuffers[CONTEXT_UID];
+
+        if (!fbo)
+        {
+            return;
+        }
+        if (!framebuffer)
+        {
+            if (fbo.multisample <= 1)
+            {
+                return;
+            }
+            if (!fbo.blitFramebuffer)
+            {
+                fbo.blitFramebuffer = new Framebuffer(current.width, current.height);
+                fbo.blitFramebuffer.addColorTexture(0, current.colorTextures[0]);
+            }
+            framebuffer = fbo.blitFramebuffer;
+        }
+
+        if (!sourcePixels)
+        {
+            sourcePixels = tempRectangle;
+            sourcePixels.width = current.width;
+            sourcePixels.height = current.height;
+        }
+        if (!destPixels)
+        {
+            destPixels = sourcePixels;
+        }
+
+        this.bind(framebuffer);
+        gl.bindFramebuffer(gl.READ_FRAMEBUFFER, fbo.framebuffer);
+        gl.blitFramebuffer(sourcePixels.x, sourcePixels.y, sourcePixels.width, sourcePixels.height,
+            destPixels.x, destPixels.y, destPixels.width, destPixels.height,
+            gl.COLOR_BUFFER_BIT, gl.LINEAR
+        );
+    }
+
+    /**
      * Disposes framebuffer
      * @param {PIXI.Framebuffer} framebuffer framebuffer that has to be disposed of
      * @param {boolean} [contextLost=false] If context was lost, we suppress all delete function calls
@@ -407,6 +530,15 @@ export class FramebufferSystem extends System
             {
                 gl.deleteRenderbuffer(fbo.stencil);
             }
+            if (fbo.multisample)
+            {
+                gl.deleteRenderbuffer(fbo.multisample);
+            }
+        }
+
+        if (fbo.blitFramebuffer)
+        {
+            this.disposeFramebuffer(fbo.blitFramebuffer);
         }
     }
 

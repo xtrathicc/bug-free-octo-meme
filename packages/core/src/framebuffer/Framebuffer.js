@@ -32,6 +32,14 @@ export class Framebuffer
 
         this.glFramebuffers = {};
 
+        /**
+         * Asks framebuffer to use multi-sampling if available, 0 by default.
+         * See {@link PIXI.MSAA_QUALITY}
+         * @member {number}
+         * @default PIXI.MSAA_QUALITY.LOW
+         */
+        this.multisample = 0;
+
         this.disposeRunner = new Runner('disposeFramebuffer', 2);
     }
 
