@@ -476,6 +476,8 @@ export class FramebufferSystem extends System
                 fbo.blitFramebuffer.addColorTexture(0, current.colorTextures[0]);
             }
             framebuffer = fbo.blitFramebuffer;
+            framebuffer.width = current.width;
+            framebuffer.height = current.height;
         }
 
         if (!sourcePixels)
