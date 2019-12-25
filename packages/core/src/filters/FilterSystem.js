@@ -287,7 +287,7 @@ export class FilterSystem extends System
 
         const lastState = filterStack[filterStack.length - 1];
 
-        if (state.renderTexture.baseTexture.framebuffer.multisample >= 1)
+        if (state.renderTexture.baseTexture.framebuffer.multisample > 1)
         {
             state.renderTexture.baseTexture.framebuffer.blit();
         }
