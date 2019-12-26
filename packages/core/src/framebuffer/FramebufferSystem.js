@@ -105,15 +105,16 @@ export class FramebufferSystem extends System
         const { msaaSamples } = this;
         let res = 0;
 
-        if (msaaSamples === null)
+        if (samples <= 1 || msaaSamples === null)
         {
             return 0;
         }
         for (let i = 0; i < msaaSamples.length; i++)
         {
-            if (msaaSamples[i] >= samples)
+            if (msaaSamples[i] <= samples)
             {
                 res = msaaSamples[i];
+                break;
             }
         }
 
@@ -491,11 +492,13 @@ export class FramebufferSystem extends System
             destPixels = sourcePixels;
         }
 
+        const sameSize = sourcePixels.width === destPixels.width && sourcePixels.height === destPixels.height;
+
         this.bind(framebuffer);
         gl.bindFramebuffer(gl.READ_FRAMEBUFFER, fbo.framebuffer);
         gl.blitFramebuffer(sourcePixels.x, sourcePixels.y, sourcePixels.width, sourcePixels.height,
             destPixels.x, destPixels.y, destPixels.width, destPixels.height,
-            gl.COLOR_BUFFER_BIT, gl.LINEAR
+            gl.COLOR_BUFFER_BIT, sameSize ? gl.NEAREST : gl.LINEAR
         );
     }
 
