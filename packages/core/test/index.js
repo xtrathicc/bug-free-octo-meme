@@ -3,6 +3,7 @@ require('./Texture');
 require('./Renderer');
 require('./MaskSystem');
 require('./TextureSystem');
+require('./FramebufferSystem');
 require('./ShaderSystem');
 require('./BatchRenderer');
 require('./Geometry');
