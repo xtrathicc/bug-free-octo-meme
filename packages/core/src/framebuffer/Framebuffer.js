@@ -36,7 +36,7 @@ export class Framebuffer
          * Asks framebuffer to use multi-sampling if available, 0 by default.
          * See {@link PIXI.MSAA_QUALITY}
          * @member {number}
-         * @default PIXI.MSAA_QUALITY.LOW
+         * @default PIXI.MSAA_QUALITY.NONE
          */
         this.multisample = 0;
 
