@@ -401,13 +401,13 @@ export enum MASK_TYPES {
  * @static
  * @enum {number}
  * @property {number} NONE - No multisampling for this renderTexture
- * @property {number} LOW - Same as NONE
+ * @property {number} LOW - Try 2 samples
  * @property {number} MEDIUM - Try 4 samples
  * @property {number} HIGH - Try 8 samples
  */
 export enum MSAA_QUALITY {
     NONE = 0,
-    LOW = 0,
+    LOW = 2,
     MEDIUM = 4,
     HIGH = 8
 }

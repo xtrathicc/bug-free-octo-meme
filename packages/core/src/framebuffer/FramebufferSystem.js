@@ -1,6 +1,6 @@
 import { System } from '../System';
 import { Rectangle } from '@pixi/math';
-import { ENV } from '@pixi/constants';
+import {ENV, MSAA_QUALITY} from '@pixi/constants';
 import { settings } from '../settings';
 import { Framebuffer } from './Framebuffer';
 
@@ -97,17 +97,17 @@ export class FramebufferSystem extends System
     /**
      * Detects number of samples that is not more than a param but as close to it as possible
      *
-     * @param {number} samples number of samples
-     * @returns {number} recommended number of samples
+     * @param {PIXI.MSAA_QUALITY} samples number of samples
+     * @returns {PIXI.MSAA_QUALITY} recommended number of samples
      */
     detectSamples(samples)
     {
         const { msaaSamples } = this;
-        let res = 0;
+        let res = MSAA_QUALITY;
 
         if (samples <= 1 || msaaSamples === null)
         {
-            return 0;
+            return res;
         }
         for (let i = 0; i < msaaSamples.length; i++)
         {
@@ -120,7 +120,7 @@ export class FramebufferSystem extends System
 
         if (res === 1)
         {
-            res = 0;
+            res = MSAA_QUALITY.NONE;
         }
 
         return res;
