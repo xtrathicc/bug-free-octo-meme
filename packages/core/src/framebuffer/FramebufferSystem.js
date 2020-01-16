@@ -1,6 +1,6 @@
 import { System } from '../System';
 import { Rectangle } from '@pixi/math';
-import {ENV, MSAA_QUALITY} from '@pixi/constants';
+import { ENV, MSAA_QUALITY } from '@pixi/constants';
 import { settings } from '../settings';
 import { Framebuffer } from './Framebuffer';
 
