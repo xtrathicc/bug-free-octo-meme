@@ -103,7 +103,7 @@ export class FramebufferSystem extends System
     detectSamples(samples)
     {
         const { msaaSamples } = this;
-        let res = MSAA_QUALITY;
+        let res = MSAA_QUALITY.NONE;
 
         if (samples <= 1 || msaaSamples === null)
         {
